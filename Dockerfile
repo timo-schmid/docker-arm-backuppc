@@ -1,7 +1,10 @@
-FROM ubuntu:14.04
+FROM ioft/armhf-ubuntu:15.10
 
-MAINTAINER ktwe
+MAINTAINER Timo Schmid
 
+ENV DEBIAN_FRONTEND "noninteractive"
+
+VOLUME ["/etc/backuppc"]
 VOLUME ["/var/lib/backuppc"]
 
 RUN apt-get update && apt-get upgrade -y
@@ -16,13 +19,17 @@ RUN echo "backuppc backuppc/reconfigure-webserver multiselect apache2" | debconf
 
 RUN apt-get install -y backuppc apache2-utils
 
-RUN htpasswd -b /etc/backuppc/htpasswd backuppc password
+RUN apt-get install -y libsocket6-perl
 
 COPY supervisord.conf /etc/supervisord.conf
 COPY msmtprc /var/lib/backuppc/.msmtprc
 COPY run.sh /run.sh
+COPY 000-localhost.conf /etc/apache2/sites-available/000-localhost.conf
 
-RUN sed -i 's/\/usr\/sbin\/sendmail/\/usr\/bin\/msmtp/g' /etc/backuppc/config.pl
+RUN rm -rf /etc/bakuppc/* /etc/apache2/conf-enabled/backuppc.conf
+
+RUN a2dissite 000-default
+RUN a2ensite  000-localhost
 
 RUN chmod 0755 /run.sh
 
